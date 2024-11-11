@@ -13,13 +13,10 @@ class WrapperSession extends BaseClassProxy {
     super();
   }
 
-  public getMsgService(): NTMsgService;
+  public getMsgService(): NTMsgService | undefined;
   @NTQQLoader.MethodHook()
   @NTQQLoader.AttachClass(NTMsgService)
-  public getMsgService(
-    this: MethodThis<WrapperSession>,
-    ...args: any[]
-  ) {
+  public getMsgService(this: MethodThis<WrapperSession>, ...args: any[]) {
     log("getMsgService");
     return this.origin(...args);
   }

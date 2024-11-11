@@ -2,13 +2,17 @@ import { ProxyFunction } from "@/types";
 import {
   BaseClassProxy,
   createFunctionProxy,
+  MethodFunction,
   MethodThis,
   ModuleLoader,
 } from "@/proxy";
 
 export class NTQQLoader extends ModuleLoader {
   private static instance = new NTQQLoader();
-  private _exportHookCb = new Map<string, (obj: object) => any>();
+  private _exportHookCb = new Map<
+    string,
+    (obj: object, hooked: boolean) => any
+  >();
 
   public constructor() {
     super("wrapper.node");
@@ -21,7 +25,7 @@ export class NTQQLoader extends ModuleLoader {
       function (...args: any[]) {
         const result = this.origin(...args);
         const cb = self._exportHookCb.get(`${exportName}.${this.method}`);
-        if (cb) return cb(result);
+        if (cb) return cb(result, true);
         return result;
       },
       true
@@ -40,7 +44,7 @@ export class NTQQLoader extends ModuleLoader {
     const constructorName = Object.getPrototypeOf(ctor).name;
     return function (
       value: (this: MethodThis<T2>, ...args: any[]) => any,
-      context: ClassMethodDecoratorContext<MethodThis<T2>, ProxyFunction<T2>>
+      context: ClassMethodDecoratorContext<MethodThis<T2>, MethodFunction<T2>>
     ) {
       if (context.kind == "method") {
         const cb = self.instance._exportHookCb.get(constructorName);
@@ -53,8 +57,8 @@ export class NTQQLoader extends ModuleLoader {
                   context.name
                 )}"`
               );
-            const result = value.apply(this, args);
-            return cb(result);
+            // 处理AttachClass的isHooked总是true的问题
+            return cb(value.apply(this, args), this.isHooked);
           };
         }
 

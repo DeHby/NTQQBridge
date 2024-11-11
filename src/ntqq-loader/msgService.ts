@@ -17,7 +17,7 @@ export class NTMsgService extends BaseClassProxy {
   public sendMsg(...args: any[]): any;
   @NTQQLoader.MethodHook()
   public sendMsg(this: MethodThis<NTMsgService>, ...args: any[]) {
-    log("sendMsg", args);
+    log(`sendMsg isHooked:${this.isHooked}`);
     return this.origin(...args);
   }
 }
