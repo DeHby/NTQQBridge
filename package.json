@@ -1,0 +1,28 @@
+{
+    "name": "mnt",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
+    "scripts": {
+        "release": "yarn --production",
+        "dev": "set TEST=1 && nodemon ./src/index.ts",
+        "build": "tsc",
+        "start": "ts-node ./dist/index.js",
+        "upgrade": "yarn upgrade-interactive --latest",
+        "clean": "rmdir /s /q dist",
+        "debug": "set DEBUG=1 && node ./dist/dev/pipe-logger"
+    },
+    "dependencies": {
+        "json-rpc-2.0": "^1.7.0",
+        "module-alias": "^2.2.3",
+        "nodemon": "^3.0.1",
+        "ts-node": "^10.9.2"
+    },
+    "devDependencies": {
+        "@types/dotenv": "^8.2.0",
+        "@types/module-alias": "^2.0.4",
+        "@types/node": "^22.9.0",
+        "tslib": "^2.8.1",
+        "typescript": "^5.6.3"
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "tabnine.codeLensEnabled": false,
+    "js/ts.implicitProjectConfig.experimentalDecorators": true,
+    "typescript.disableAutomaticTypeAcquisition": false,
+    "typescript.tsdk": "node_modules\\typescript\\lib"
+}
