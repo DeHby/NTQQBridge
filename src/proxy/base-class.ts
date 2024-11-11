@@ -16,7 +16,7 @@ export abstract class BaseClassProxy<T extends BaseClassProxy<T> = any> {
   // 实例方法映射表
   private _methodHookCb: Map<string, MethodFunction<T>> = new Map();
 
-  static MethodHook<T extends BaseClassProxy>(methodName?: string) {
+  static methodHook<T extends BaseClassProxy>(methodName?: string) {
     return function (
       value: (this: MethodThis<T>, ...args: any[]) => any,
       context: ClassMethodDecoratorContext<MethodThis<T>, MethodFunction<T>>
@@ -27,7 +27,7 @@ export abstract class BaseClassProxy<T extends BaseClassProxy<T> = any> {
           // 判断用户调用 补充上下文
           if (!this.origin) {
             if (this._originInstance === undefined)
-              throw new Error("Instance Not Attached");
+                throw new Error("Instance not attached");
             this.method = method;
             this.isHooked = false;
             this.origin = this._originInstance[method].bind(

@@ -1,6 +1,6 @@
 import { log, trace } from "console";
 import { WrapperSession } from "@/ntqq-loader/index";
-import { NTMsgService } from "@/ntqq-loader/msgService";
+import { NTMsgService } from "ntqq-loader/instances/msg-service";
 
 async function main() {
   try {

@@ -2,11 +2,11 @@ import { BaseClassProxy, MethodThis } from "@/proxy";
 import { NTQQLoader } from "@/ntqq-loader";
 import { log } from "console";
 
-import { NTMsgService } from "./msgService";
+import { NTMsgService } from "./msg-service";
 
 @NTQQLoader.Constructor("NodeIQQNTWrapperSession.create")
 class WrapperSession extends BaseClassProxy {
-  public static _instance = new WrapperSession();
+  public static instance = new WrapperSession();
 
   // 禁止主动实例化
   private constructor() {
@@ -22,4 +22,4 @@ class WrapperSession extends BaseClassProxy {
   }
 }
 
-export default WrapperSession._instance;
+export default WrapperSession.instance;

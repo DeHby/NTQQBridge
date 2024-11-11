@@ -1,4 +1,3 @@
-import { ProxyFunction } from "@/types";
 import {
   BaseClassProxy,
   createFunctionProxy,
@@ -8,7 +7,7 @@ import {
 } from "@/proxy";
 
 export class NTQQLoader extends ModuleLoader {
-  private static instance = new NTQQLoader();
+  private static _instance = new NTQQLoader();
   private _exportHookCb = new Map<
     string,
     (obj: object, hooked: boolean) => any
@@ -33,7 +32,7 @@ export class NTQQLoader extends ModuleLoader {
   }
 
   static MethodHook<T extends BaseClassProxy>(methodName?: string) {
-    return BaseClassProxy.MethodHook<T>(methodName);
+    return BaseClassProxy.methodHook<T>(methodName);
   }
 
   // 顺序有要求 必须先Hook
@@ -47,13 +46,13 @@ export class NTQQLoader extends ModuleLoader {
       context: ClassMethodDecoratorContext<MethodThis<T2>, MethodFunction<T2>>
     ) {
       if (context.kind == "method") {
-        const cb = self.instance._exportHookCb.get(constructorName);
+        const cb = self._instance._exportHookCb.get(constructorName);
 
         if (cb) {
           return function (this: MethodThis<T2>, ...args: any[]) {
             if (!this.origin)
               throw new Error(
-                `You must use MethodHook before using @AttachClass on Method "${String(
+                `You must use @MethodHook before using @AttachClass on method "${String(
                   context.name
                 )}"`
               );
@@ -78,7 +77,7 @@ export class NTQQLoader extends ModuleLoader {
         return class extends (value as new (...args: any[]) => BaseClassProxy) {
           constructor(...args: any[]) {
             super(...args);
-            self.instance._exportHookCb.set(
+            self._instance._exportHookCb.set(
               constructor ? constructor : String(context.name),
               this.attach.bind(this)
             );
@@ -90,7 +89,7 @@ export class NTQQLoader extends ModuleLoader {
   }
 
   public static getInstance() {
-    return NTQQLoader.instance;
+    return NTQQLoader._instance;
   }
 }
-export { default as WrapperSession } from "./wrapperSession";
+export { default as WrapperSession } from "./instances/wrapper-session"
