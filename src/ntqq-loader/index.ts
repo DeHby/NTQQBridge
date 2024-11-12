@@ -78,38 +78,28 @@ export class NTQQLoader extends ModuleLoader {
 
         if (!onEnterCallback && !onLeaveCallback) return value;
 
-        if (onEnterCallback) {
-          return function (this: MethodThis<T2>, ...args: any[]) {
-            if (!this.origin)
-              throw new Error(
-                `You must use @MethodHook before using @AttachClass on method "${String(
-                  context.name
-                )}"`
-              );
+        return function (this: MethodThis<T2>, ...args: any[]) {
+          if (!this.origin)
+            throw new Error(
+              `You must use @MethodHook before using @AttachClass on method "${String(
+                context.name
+              )}"`
+            );
 
-            // 处理AttachClass的invokeType总是CallerType.System的问题
+          if (onEnterCallback) {
             args[constructorNames.indexOfAttachClassWithinOnEnter] =
               onEnterCallback(
                 args[constructorNames.indexOfAttachClassWithinOnEnter],
-                this.invokeType
+                this.invokeType // 处理AttachClass的invokeType总是CallerType.System的问题
               );
-            return value.apply(this, args);
-          };
-        }
+          }
 
-        if (onLeaveCallback) {
-          return function (this: MethodThis<T2>, ...args: any[]) {
-            if (!this.origin)
-              throw new Error(
-                `You must use @MethodHook before using @AttachClass on method "${String(
-                  context.name
-                )}"`
-              );
+          const result = value.apply(this, args);
 
-            // 处理AttachClass的invokeType总是CallerType.System的问题
-            return onLeaveCallback(value.apply(this, args), this.invokeType);
-          };
-        }
+          return onLeaveCallback
+            ? onLeaveCallback(result, this.invokeType)
+            : result;
+        };
       }
     };
   }
