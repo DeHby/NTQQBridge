@@ -133,6 +133,7 @@
   **`@NTQQLoader.AttachClassWithArg` 是一个方法装饰器，主要用于将类方法传入的指定参数实例对象绑定到自定义处理类上。适用于那些无法直接通过 `export` 顶层对象进行构造或 `create/get` 方法实例化的类或者某些用于添加回调事件对象的方法。**
 - #### 参数
   **target：用于绑定对象的`BaseClassProxy`子类**
+  
   **indexOfArg：方法参数索引**
 - #### 使用场景
 
