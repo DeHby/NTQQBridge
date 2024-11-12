@@ -38,18 +38,47 @@ export class NTQQLoader extends ModuleLoader {
 
   // 顺序有要求 必须先Hook
   static AttachClass<T extends BaseClassProxy, T2 extends BaseClassProxy>(
-    ctor: new (...args: any[]) => T
+    target:
+      | {
+          onEnter?: new (...args: any[]) => T;
+          onLeave?: new (...args: any[]) => T;
+          indexOfAttachClassWithinOnEnter?: number;
+        }
+      | (new (...args: any[]) => T) // 默认是onLeave
   ) {
     const self = this;
-    const constructorName = Object.getPrototypeOf(ctor).name;
+    const constructorNames =
+      "object" === typeof target
+        ? {
+            onEnter: target.onEnter
+              ? Object.getPrototypeOf(target.onEnter).name
+              : undefined,
+            onLeave: target.onLeave
+              ? Object.getPrototypeOf(target.onLeave).name
+              : undefined,
+            indexOfAttachClassWithinOnEnter:
+              target.indexOfAttachClassWithinOnEnter ?? 0,
+          }
+        : {
+            onLeave: Object.getPrototypeOf(target).name,
+            indexOfAttachClassWithinOnEnter: 0,
+          };
+
     return function (
       value: (this: MethodThis<T2>, ...args: any[]) => any,
       context: ClassMethodDecoratorContext<MethodThis<T2>, MethodFunction<T2>>
     ) {
       if (context.kind == "method") {
-        const cb = self._instance._exportHookCb.get(constructorName);
+        const onEnterCallback = self._instance._exportHookCb.get(
+          constructorNames.onEnter
+        );
+        const onLeaveCallback = self._instance._exportHookCb.get(
+          constructorNames.onLeave
+        );
 
-        if (cb) {
+        if (!onEnterCallback && !onLeaveCallback) return value;
+
+        if (onEnterCallback) {
           return function (this: MethodThis<T2>, ...args: any[]) {
             if (!this.origin)
               throw new Error(
@@ -57,12 +86,30 @@ export class NTQQLoader extends ModuleLoader {
                   context.name
                 )}"`
               );
+
             // 处理AttachClass的invokeType总是CallerType.System的问题
-            return cb(value.apply(this, args), this.invokeType);
+            args[constructorNames.indexOfAttachClassWithinOnEnter] =
+              onEnterCallback(
+                args[constructorNames.indexOfAttachClassWithinOnEnter],
+                this.invokeType
+              );
+            return value.apply(this, args);
           };
         }
 
-        return value;
+        if (onLeaveCallback) {
+          return function (this: MethodThis<T2>, ...args: any[]) {
+            if (!this.origin)
+              throw new Error(
+                `You must use @MethodHook before using @AttachClass on method "${String(
+                  context.name
+                )}"`
+              );
+
+            // 处理AttachClass的invokeType总是CallerType.System的问题
+            return onLeaveCallback(value.apply(this, args), this.invokeType);
+          };
+        }
       }
     };
   }
@@ -70,6 +117,7 @@ export class NTQQLoader extends ModuleLoader {
   // 垃圾TS 只能先any了 搞不定
   static Constructor<T extends BaseClassProxy>(constructor?: string): any {
     const self = this;
+
     return <C extends new (...args: any[]) => T>(
       value: C,
       context: ClassDecoratorContext
@@ -85,6 +133,7 @@ export class NTQQLoader extends ModuleLoader {
           }
         };
       }
+
       return value;
     };
   }
@@ -93,4 +142,5 @@ export class NTQQLoader extends ModuleLoader {
     return NTQQLoader._instance;
   }
 }
+
 export { default as WrapperSession } from "./instances/wrapper-session";

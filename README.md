@@ -131,9 +131,9 @@
 ### @NTQQLoader.AttachClass
 
 - #### 功能
-  **`@NTQQLoader.AttachClass` 是一个方法装饰器，主要用于将类方法返回的实例对象绑定到自定义处理类上。适用于那些无法直接通过 `export` 顶层对象进行构造或 `create/get` 方法实例化的类。**
+  **`@NTQQLoader.AttachClass` 是一个方法装饰器，主要用于将类方法返回的实例对象或者类方法传入的指定参数实例对象绑定到自定义处理类上。适用于那些无法直接通过 `export` 顶层对象进行构造或 `create/get` 方法实例化的类或者某些用于添加回调事件对象的方法。**
 - #### 参数
-  **CustomClass：用于拦截的`BaseClassProxy`的子类**
+  **target：用于拦截`BaseClassProxy`的子类 或 包含onEnter/onLeave的对象(onEnter/onLeave为`BaseClassProxy`的子类)**
 - #### 使用场景
 
   **1.非标准实例化类的处理：某些类无法通过 `export` 直接实例化，也没有标准的 `create/get` 方法。这类实例通常无法直接通过 `@NTQQLoader.Constructor` 进行拦截和 Hook。**
@@ -165,8 +165,28 @@
     }
   ```
 
+  **3.`@NTQQLoader.AttachClass` 允许通过类方法传入的实例对象，自动绑定到指定的自定义处理类上，实现对实例的进一步 Hook 和控制。**
+
+  ```typescript
+  @NTQQLoader.MethodHook()
+  @NTQQLoader.AttachClass({ onEnter: NTMsgListener })
+  public addKernelMsgListener(this: MethodThis<NTMsgService>, ...args: any[]) {
+    return this.origin(...args);
+  }
+
+  @NTQQLoader.Constructor()
+  export class NTMsgListener extends BaseClassProxy {
+    public constructor() {
+      super();
+    }
+
+    @NTQQLoader.MethodHook()
+    ...
+  }
+  ```
+
 - #### 使用要求
-  **与 `@NTQQLoader.MethodHook` 联合使用：通常需要结合 `@NTQQLoader.MethodHook`，在方法级别进行拦截，并返回被增强的实例对象。**
+  **与 `@NTQQLoader.MethodHook` 联合使用：通常需要结合 `@NTQQLoader.MethodHook`，在方法级别进行拦截，并对目标实例对象进行处理。**
 
 ---
 
