@@ -14,7 +14,7 @@ export function proxyDlopen(moduleName: string, cb: (obj: any) => object) {
           paths: [];
           children: [];
         },
-        string
+        string,
       ]
     ) {
       const ret = Reflect.apply(target, thisArg, args);

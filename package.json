@@ -2,7 +2,7 @@
     "name": "mnt",
     "version": "1.0.0",
     "main": "index.js",
-    "license": "MIT",
+    "license": "AGPL-3.0-only",
     "scripts": {
         "release": "yarn --production",
         "dev": "set TEST=1 && nodemon ./src/index.ts",

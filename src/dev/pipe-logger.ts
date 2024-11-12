@@ -21,7 +21,7 @@ if (!process.env.TEST) {
           argArray: [
             str: Uint8Array | string,
             encoding: BufferEncoding,
-            cb: (error: Error | null | undefined) => void
+            cb: (error: Error | null | undefined) => void,
           ]
         ) {
           client.write(argArray[0]);

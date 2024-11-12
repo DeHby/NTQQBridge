@@ -1,14 +1,19 @@
 import { ProxyFunctionThis } from "@/types";
 import { createGetProxy } from "./common";
 
-export type Instance = object | undefined;
-export type MethodThis<T extends BaseClassProxy> = ProxyFunctionThis<T> & {
-  isHooked: boolean;
+type Instance = object | undefined;
+type MethodThis<T extends BaseClassProxy> = ProxyFunctionThis<T> & {
+  invokeType: CallerType;
 };
-export type MethodFunction<T extends BaseClassProxy> = (
+type MethodFunction<T extends BaseClassProxy> = (
   this: MethodThis<T>,
   ...args: any[]
 ) => any;
+
+enum CallerType {
+  System = 0,
+  Manual = 1,
+}
 
 export abstract class BaseClassProxy<T extends BaseClassProxy<T> = any> {
   // 代理的原始实例
@@ -27,9 +32,9 @@ export abstract class BaseClassProxy<T extends BaseClassProxy<T> = any> {
           // 判断用户调用 补充上下文
           if (!this.origin) {
             if (this._originInstance === undefined)
-                throw new Error("Instance not attached");
+              throw new Error("Instance not attached");
+            this.invokeType = CallerType.Manual;
             this.method = method;
-            this.isHooked = false;
             this.origin = this._originInstance[method].bind(
               this._originInstance
             );
@@ -54,7 +59,7 @@ export abstract class BaseClassProxy<T extends BaseClassProxy<T> = any> {
   }
 
   // 附加接管对象 可能多次调用
-  protected attach(obj: object, hooked: boolean) {
+  protected attach(obj: object, invokeType: CallerType) {
     const self = this;
     if (obj && !this._originInstance && obj !== this._originInstance)
       this._originInstance = obj;
@@ -70,9 +75,9 @@ export abstract class BaseClassProxy<T extends BaseClassProxy<T> = any> {
                 return cb.apply(
                   {
                     ...(self as unknown as T),
+                    invokeType: invokeType,
                     method,
                     origin,
-                    isHooked: hooked,
                   },
                   args
                 );
@@ -85,3 +90,5 @@ export abstract class BaseClassProxy<T extends BaseClassProxy<T> = any> {
       : obj;
   }
 }
+
+export { Instance, MethodThis, MethodFunction, CallerType };
