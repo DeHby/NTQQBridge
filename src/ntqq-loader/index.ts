@@ -36,12 +36,13 @@ export class NTQQLoader extends ModuleLoader {
     return BaseClassProxy.methodHook<T>(methodName);
   }
 
-  // 顺序有要求 必须先Hook
-  static AttachClass<T extends BaseClassProxy, T2 extends BaseClassProxy>(
-    ctor: new (...args: any[]) => T
-  ) {
+  static AttachClassWithArg<
+    T extends BaseClassProxy,
+    T2 extends BaseClassProxy,
+  >(target: new (...args: any[]) => T, indexOfArg: number = 0) {
     const self = this;
-    const constructorName = Object.getPrototypeOf(ctor).name;
+    const constructorName = Object.getPrototypeOf(target).name;
+
     return function (
       value: (this: MethodThis<T2>, ...args: any[]) => any,
       context: ClassMethodDecoratorContext<MethodThis<T2>, MethodFunction<T2>>
@@ -53,23 +54,59 @@ export class NTQQLoader extends ModuleLoader {
           return function (this: MethodThis<T2>, ...args: any[]) {
             if (!this.origin)
               throw new Error(
-                `You must use @MethodHook before using @AttachClass on method "${String(
+                `You must use @MethodHook before using @AttachClassWithArg on method "${String(
                   context.name
                 )}"`
               );
-            // 处理AttachClass的invokeType总是CallerType.System的问题
+
+            args[indexOfArg] = cb(args[indexOfArg], this.invokeType);
+            return value.apply(this, args);
+          };
+        }
+      }
+    };
+  }
+
+  static AttachClassWithRet<
+    T extends BaseClassProxy,
+    T2 extends BaseClassProxy,
+  >(target: new (...args: any[]) => T) {
+    const self = this;
+    const constructorName = Object.getPrototypeOf(target).name;
+
+    return function (
+      value: (this: MethodThis<T2>, ...args: any[]) => any,
+      context: ClassMethodDecoratorContext<MethodThis<T2>, MethodFunction<T2>>
+    ) {
+      if (context.kind == "method") {
+        const cb = self._instance._exportHookCb.get(constructorName);
+
+        if (cb) {
+          return function (this: MethodThis<T2>, ...args: any[]) {
+            if (!this.origin)
+              throw new Error(
+                `You must use @MethodHook before using @AttachClassWithRet on method "${String(
+                  context.name
+                )}"`
+              );
+
             return cb(value.apply(this, args), this.invokeType);
           };
         }
-
-        return value;
       }
     };
+  }
+
+  static AttachClass<T extends BaseClassProxy, T2 extends BaseClassProxy>(
+    target: new (...args: any[]) => T
+  ) {
+    return NTQQLoader.AttachClassWithRet<T, T2>(target);
   }
 
   // 垃圾TS 只能先any了 搞不定
   static Constructor<T extends BaseClassProxy>(constructor?: string): any {
     const self = this;
+
     return <C extends new (...args: any[]) => T>(
       value: C,
       context: ClassDecoratorContext
@@ -85,6 +122,7 @@ export class NTQQLoader extends ModuleLoader {
           }
         };
       }
+
       return value;
     };
   }
@@ -93,4 +131,5 @@ export class NTQQLoader extends ModuleLoader {
     return NTQQLoader._instance;
   }
 }
+
 export { default as WrapperSession } from "./instances/wrapper-session";

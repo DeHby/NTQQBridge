@@ -13,6 +13,8 @@ if (!process.env.TEST) {
 
     server.listen(PIPE_NAME);
   } else {
+    let remainLog: Array<any> = [];
+    let connectStatus = 0;
     const createNewOutputStream = (_origin) =>
       new Proxy(_origin, {
         apply(
@@ -24,17 +26,34 @@ if (!process.env.TEST) {
             cb: (error: Error | null | undefined) => void,
           ]
         ) {
-          client.write(argArray[0]);
+          switch (connectStatus) {
+            case 0:
+              remainLog.push(argArray[0]);
+              break;
+            case 1:
+              client.write(argArray[0]);
+              break;
+          }
           return Reflect.apply(target, thisArg, argArray);
         },
       });
+    process.stdout.write = createNewOutputStream(process.stdout.write);
+    process.stderr.write = createNewOutputStream(process.stderr.write);
     const client = createConnection({ path: PIPE_NAME }, () => {
       console.log("connected to Pipe");
-      process.stdout.write = createNewOutputStream(process.stdout.write);
-      process.stderr.write = createNewOutputStream(process.stderr.write);
+      connectStatus = 1;
+      if (remainLog.length > 0) {
+        remainLog.forEach((v) => {
+          client.write(v);
+        });
+        remainLog = [];
+      }
     });
 
     // 连不上默认不处理
-    client.on("error", (err) => {});
+    client.on("error", (err) => {
+      connectStatus = 2;
+      remainLog = [];
+    });
   }
 }
