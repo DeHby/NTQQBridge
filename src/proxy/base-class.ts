@@ -11,9 +11,9 @@ type MethodFunction<T extends BaseClassProxy> = (
 ) => any;
 
 enum CallerType {
-  System = 0,   
-  Manual = 1 
-};
+  System = 0,
+  Manual = 1,
+}
 
 export abstract class BaseClassProxy<T extends BaseClassProxy<T> = any> {
   // 代理的原始实例
