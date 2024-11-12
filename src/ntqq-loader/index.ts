@@ -36,72 +36,71 @@ export class NTQQLoader extends ModuleLoader {
     return BaseClassProxy.methodHook<T>(methodName);
   }
 
-  // 顺序有要求 必须先Hook
-  static AttachClass<T extends BaseClassProxy, T2 extends BaseClassProxy>(
-    target:
-      | {
-          onEnter?: new (...args: any[]) => T;
-          onLeave?: new (...args: any[]) => T;
-          indexOfAttachClassWithinOnEnter?: number;
-        }
-      | (new (...args: any[]) => T) // 默认是onLeave
-  ) {
+  static AttachClassWithArg<
+    T extends BaseClassProxy,
+    T2 extends BaseClassProxy,
+  >(target: new (...args: any[]) => T, indexOfArg: number = 0) {
     const self = this;
-    const constructorNames =
-      "object" === typeof target
-        ? {
-            onEnter: target.onEnter
-              ? Object.getPrototypeOf(target.onEnter).name
-              : undefined,
-            onLeave: target.onLeave
-              ? Object.getPrototypeOf(target.onLeave).name
-              : undefined,
-            indexOfAttachClassWithinOnEnter:
-              target.indexOfAttachClassWithinOnEnter ?? 0,
-          }
-        : {
-            onLeave: Object.getPrototypeOf(target).name,
-            indexOfAttachClassWithinOnEnter: 0,
-          };
+    const constructorName = Object.getPrototypeOf(target).name;
 
     return function (
       value: (this: MethodThis<T2>, ...args: any[]) => any,
       context: ClassMethodDecoratorContext<MethodThis<T2>, MethodFunction<T2>>
     ) {
       if (context.kind == "method") {
-        const onEnterCallback = self._instance._exportHookCb.get(
-          constructorNames.onEnter
-        );
-        const onLeaveCallback = self._instance._exportHookCb.get(
-          constructorNames.onLeave
-        );
+        const cb = self._instance._exportHookCb.get(constructorName);
 
-        if (!onEnterCallback && !onLeaveCallback) return value;
-
-        return function (this: MethodThis<T2>, ...args: any[]) {
-          if (!this.origin)
-            throw new Error(
-              `You must use @MethodHook before using @AttachClass on method "${String(
-                context.name
-              )}"`
-            );
-
-          if (onEnterCallback) {
-            args[constructorNames.indexOfAttachClassWithinOnEnter] =
-              onEnterCallback(
-                args[constructorNames.indexOfAttachClassWithinOnEnter],
-                this.invokeType // 处理AttachClass的invokeType总是CallerType.System的问题
+        if (cb) {
+          return function (this: MethodThis<T2>, ...args: any[]) {
+            if (!this.origin)
+              throw new Error(
+                `You must use @MethodHook before using @AttachClassWithArg on method "${String(
+                  context.name
+                )}"`
               );
-          }
 
-          const result = value.apply(this, args);
-
-          return onLeaveCallback
-            ? onLeaveCallback(result, this.invokeType)
-            : result;
-        };
+            args[indexOfArg] = cb(args[indexOfArg], this.invokeType);
+            return value.apply(this, args);
+          };
+        }
       }
     };
+  }
+
+  static AttachClassWithRet<
+    T extends BaseClassProxy,
+    T2 extends BaseClassProxy,
+  >(target: new (...args: any[]) => T) {
+    const self = this;
+    const constructorName = Object.getPrototypeOf(target).name;
+
+    return function (
+      value: (this: MethodThis<T2>, ...args: any[]) => any,
+      context: ClassMethodDecoratorContext<MethodThis<T2>, MethodFunction<T2>>
+    ) {
+      if (context.kind == "method") {
+        const cb = self._instance._exportHookCb.get(constructorName);
+
+        if (cb) {
+          return function (this: MethodThis<T2>, ...args: any[]) {
+            if (!this.origin)
+              throw new Error(
+                `You must use @MethodHook before using @AttachClassWithRet on method "${String(
+                  context.name
+                )}"`
+              );
+
+            return cb(value.apply(this, args), this.invokeType);
+          };
+        }
+      }
+    };
+  }
+
+  static AttachClass<T extends BaseClassProxy, T2 extends BaseClassProxy>(
+    target: new (...args: any[]) => T
+  ) {
+    return NTQQLoader.AttachClassWithRet<T, T2>(target);
   }
 
   // 垃圾TS 只能先any了 搞不定

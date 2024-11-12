@@ -23,7 +23,7 @@ export class NTMsgService extends BaseClassProxy {
   }
 
   @NTQQLoader.MethodHook()
-  @NTQQLoader.AttachClass({ onEnter: NTMsgListener })
+  @NTQQLoader.AttachClassWithArg(NTMsgListener)
   public addKernelMsgListener(this: MethodThis<NTMsgService>, ...args: any[]) {
     log(`addKernelMsgListener invokeType:${this.invokeType}`);
     return this.origin(...args);
