@@ -113,7 +113,7 @@
     public sendMsg(...args: any[]): any;
     @NTQQLoader.MethodHook()
     public sendMsg(this: MethodThis<NTMsgService>, ...args: any[]) {
-      if(this.isHooked)
+      if(CallerType.Manual === this.invokeType)
       {
         // 来自主动调用
         return "恭喜你调用成功";

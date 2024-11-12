@@ -1,5 +1,6 @@
 import {
   BaseClassProxy,
+  CallerType,
   createFunctionProxy,
   MethodFunction,
   MethodThis,
@@ -10,7 +11,7 @@ export class NTQQLoader extends ModuleLoader {
   private static _instance = new NTQQLoader();
   private _exportHookCb = new Map<
     string,
-    (obj: object, hooked: boolean) => any
+    (obj: object, invokeType: CallerType) => any
   >();
 
   public constructor() {
@@ -24,7 +25,7 @@ export class NTQQLoader extends ModuleLoader {
       function (...args: any[]) {
         const result = this.origin(...args);
         const cb = self._exportHookCb.get(`${exportName}.${this.method}`);
-        if (cb) return cb(result, true);
+        if (cb) return cb(result, CallerType.System);
         return result;
       },
       true
@@ -56,8 +57,8 @@ export class NTQQLoader extends ModuleLoader {
                   context.name
                 )}"`
               );
-            // 处理AttachClass的isHooked总是true的问题
-            return cb(value.apply(this, args), this.isHooked);
+            // 处理AttachClass的invokeType总是CallerType.System的问题
+            return cb(value.apply(this, args), this.invokeType);
           };
         }
 
