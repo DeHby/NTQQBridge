@@ -92,4 +92,4 @@ export class NTQQLoader extends ModuleLoader {
     return NTQQLoader._instance;
   }
 }
-export { default as WrapperSession } from "./instances/wrapper-session"
+export { default as WrapperSession } from "./instances/wrapper-session";

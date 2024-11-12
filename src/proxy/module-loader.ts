@@ -1,7 +1,6 @@
 import { createGetProxy, proxyDlopen } from "./common";
 
 export abstract class ModuleLoader {
-
   constructor(moduleName: string) {
     this._moduleLoader(moduleName);
   }
